@@ -5,10 +5,20 @@ using Sys = Cosmos.System;
 
 namespace DogOSInstall
 {
+    public enum SetupStage
+    {
+        Exit = -1,
+        Welcome = 0,
+        Format = 1
+    }
+
     public class Kernel : Sys.Kernel
     {
+        public static SetupStage setup_stage = SetupStage.Welcome;
+
         public void WelcomeScreen()
         {
+            setup_stage = SetupStage.Welcome;
             Console.BackgroundColor = ConsoleColor.Blue;
             // Wanna do it this way for easy visualization. :)
             // Mode : 80x25
@@ -38,7 +48,39 @@ namespace DogOSInstall
             Console.Write("                                                                                "); // 24
             Console.BackgroundColor = ConsoleColor.Gray;
             Console.ForegroundColor = ConsoleColor.Black;
-            Console.Write("Enter - Continue     Esc - Exit                                                "); // 25
+            Console.Write("Enter - Continue   Esc - Exit                                                  "); // 25
+            // One character is excluded since it would scroll the console
+        }
+
+        public void Welcome()
+        {
+            var looking_for_key = true;
+            WelcomeScreen();
+
+            while (looking_for_key)
+            {
+                var key = Console.ReadKey(true);
+
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    looking_for_key = false;
+                    setup_stage = SetupStage.Exit;
+                }
+                else if (key.Key == ConsoleKey.Enter)
+                {
+                    looking_for_key = false;
+                    setup_stage = SetupStage.Format;
+                }
+            }
+        }
+
+        public void Format()
+        {
+            Console.BackgroundColor = ConsoleColor.Gray;
+            Console.Clear();
+
+            Console.BackgroundColor = ConsoleColor.Blue;
+            Console.WriteLine("Format Drive");
         }
 
         protected override void BeforeRun()
@@ -52,42 +94,29 @@ namespace DogOSInstall
 
         protected override void Run()
         {
-            var exit_setup = false;
-            var looking_for_key = true;
-            WelcomeScreen();
-
-            while(looking_for_key)
+            switch (setup_stage)
             {
-                var key = Console.ReadKey(true);
+                case SetupStage.Exit:
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.Clear();
 
-                if(key.Key == ConsoleKey.Escape)
-                {
-                    looking_for_key = false;
-                    exit_setup = true;
-                }
-                else if(key.Key == ConsoleKey.Enter)
-                {
-                    looking_for_key = false;
-                }
+                    Console.WriteLine("Please remove the setup media and press any key to restart.");
+                    Console.ReadKey(true);
+                    Sys.Power.Reboot();
+                    break;
+                case SetupStage.Welcome:
+                    Welcome();
+                    break;
+                case SetupStage.Format:
+                    Format();
+                    break;
+                default:
+                    break;
             }
 
-            if(exit_setup)
-            {
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.Clear();
+            Console.BackgroundColor = ConsoleColor.Gray;
 
-                Console.WriteLine("Please remove the setup media and press any key to restart.");
-                Console.ReadKey(true);
-                Sys.Power.Reboot();
-            }
-
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.BackgroundColor = ConsoleColor.Black;
-
-            Console.Clear();
-            Console.WriteLine("Go on with setup.");
-            Console.ReadLine();
         }
     }
 }
