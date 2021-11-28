@@ -1,45 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>netcoreapp2.0</TargetFramework>
-        <RuntimeIdentifier>cosmos</RuntimeIdentifier>
-        <SelfContained>True</SelfContained>
-        <BinFormat>ELF</BinFormat>
-        <StackCorruptionDetectionEnabled>True</StackCorruptionDetectionEnabled>
-        <StackCorruptionDetectionLevel>MethodFooters</StackCorruptionDetectionLevel>
-        <Deployment>ISO</Deployment>
-        <DebugEnabled>False</DebugEnabled>
-        <DebugMode>Source</DebugMode>
-        <IgnoreDebugStubAttribute>False</IgnoreDebugStubAttribute>
-        <VMware_StackCorruptionDetectionEnabled>True</VMware_StackCorruptionDetectionEnabled>
-        <VMware_StackCorruptionDetectionLevel>MethodFooters</VMware_StackCorruptionDetectionLevel>
-        <VMware_Description>Use VMware Player or Workstation to deploy and debug.</VMware_Description>
-        <VMware_Deployment>ISO</VMware_Deployment>
-        <VMware_Launch>VMware</VMware_Launch>
-        <VMware_DebugEnabled>True</VMware_DebugEnabled>
-        <VMware_DebugMode>Source</VMware_DebugMode>
-        <VMware_IgnoreDebugStubAttribute>False</VMware_IgnoreDebugStubAttribute>
-        <VMware_CosmosDebugPort>Serial: COM1</VMware_CosmosDebugPort>
-        <VMware_VisualStudioDebugPort>Pipe: Cosmos\Serial</VMware_VisualStudioDebugPort>
-        <VMware_PxeInterface>192.168.0.8</VMware_PxeInterface>
-        <VMware_EnableGDB>False</VMware_EnableGDB>
-        <VMware_StartCosmosGDB>False</VMware_StartCosmosGDB>
-        <HyperV_StackCorruptionDetectionEnabled>True</HyperV_StackCorruptionDetectionEnabled>
-        <HyperV_StackCorruptionDetectionLevel>MethodFooters</HyperV_StackCorruptionDetectionLevel>
-        <HyperV_Description>Use Hyper-V to deploy and debug.</HyperV_Description>
-        <HyperV_Deployment>ISO</HyperV_Deployment>
-        <HyperV_Launch>HyperV</HyperV_Launch>
-        <HyperV_DebugEnabled>True</HyperV_DebugEnabled>
-        <HyperV_DebugMode>Source</HyperV_DebugMode>
-        <HyperV_IgnoreDebugStubAttribute>False</HyperV_IgnoreDebugStubAttribute>
-        <HyperV_CosmosDebugPort>Serial: COM1</HyperV_CosmosDebugPort>
-        <HyperV_VisualStudioDebugPort>Pipe: CosmosSerial</HyperV_VisualStudioDebugPort>
-        <HyperV_PxeInterface>192.168.0.8</HyperV_PxeInterface>
-        <HyperV_EnableGDB>False</HyperV_EnableGDB>
-        <HyperV_StartCosmosGDB>False</HyperV_StartCosmosGDB>
-    </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<!--<RuntimeIdentifier>cosmos</RuntimeIdentifier>-->
+		<Platform>cosmos</Platform>
+		<SupportsX86Intrinsics>false</SupportsX86Intrinsics>
+		<SelfContained>True</SelfContained>
+		<BinFormat>ELF</BinFormat>
+		<StackCorruptionDetectionEnabled>True</StackCorruptionDetectionEnabled>
+		<StackCorruptionDetectionLevel>MethodFooters</StackCorruptionDetectionLevel>
+		<Deployment>ISO</Deployment>
+		<DebugEnabled>False</DebugEnabled>
+		<DebugMode>Source</DebugMode>
+		<IgnoreDebugStubAttribute>False</IgnoreDebugStubAttribute>
+		<ISOFile>bin\Debug\net5.0\DogOS.iso</ISOFile>
+		<CompileVBEMultiboot>False</CompileVBEMultiboot>
+		<VBEResolution>800x600x32</VBEResolution>
+		<VMwareEdition>Workstation</VMwareEdition>
+	</PropertyGroup>
 
-    <PropertyGroup>
+	<PropertyGroup>
         <EnableGDB>False</EnableGDB>
         <StartCosmosGDB>False</StartCosmosGDB>
         <VisualStudioDebugPort>Pipe: Cosmos\Serial</VisualStudioDebugPort>
