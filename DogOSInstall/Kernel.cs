@@ -5,9 +5,11 @@
 */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Sys = Cosmos.System;
 using System.IO;
+using System.Linq;
 
 namespace DogOSInstall
 {
@@ -18,7 +20,8 @@ namespace DogOSInstall
         Format = 1,
         PickDisk = 2,
         FormatDiskQuestion = 3,
-        FormatDisk = 4
+        FormatDisk = 4,
+        InstallDogOS = 5
     }
 
     public class Kernel : Sys.Kernel
@@ -49,10 +52,10 @@ namespace DogOSInstall
             Console.Write("      • To enter setup, press 'Enter'.                                          ".Replace('•', (char)7)); // 8
             Console.Write("                                                                                "); // 9
             Console.Write("    Note: Do not install DogOS on your personal computer! Any hard drives in    "); // 10
-            Console.Write("          your PC accidentally be formatted, and data could be lost.            "); // 11
+            Console.Write("          your PC could accidentally be formatted, and data could be lost.      "); // 11
             Console.Write("          If you want to install DogOS on real hardware, please use a old PC    "); // 12
-            Console.Write("          that you could use for testing / using DogOS safely. Exiting          "); // 13
-            Console.Write("          setup during this screen is safe. Press 'esc' to stop setup.          "); // 14
+            Console.Write("          that you could use for testing / using DogOS safely.                  "); // 13
+            Console.Write("          Press 'esc' to stop setup.                                            "); // 14
             Console.Write("                                                                                "); // 15
             Console.Write("                                                                                "); // 16
             Console.Write("                                                                                "); // 17
@@ -102,12 +105,12 @@ namespace DogOSInstall
             Console.Write("    This part of the setup will format your drive for use with DogOS.           "); // 5
             Console.Write("    On the next screen, you can choose the drive you want to format.            "); // 6
             Console.Write("                                                                                "); // 7
-            Console.Write("    Note: Something can go wrong here loading the file system. You could        "); // 8
-            Console.Write("          lose critical data!                                                   "); // 9
-            Console.Write("                                                                                "); // 10
-            Console.Write("    Make sure the drive has already been formatted with FAT32.                  "); // 11
-            Console.Write("    Check the website for more information.                                     "); // 12
-            Console.Write("    https://DogOSdev.github.io/wiki/formatting-drive/                           "); // 13
+            Console.Write("    Make sure the drive has already been formatted with FAT32.                  "); // 8
+            Console.Write("    Check the website for more information.                                     "); // 9
+            Console.Write("    https://DogOSdev.github.io/wiki/formatting-drive/                           "); // 10
+            Console.Write("                                                                                "); // 11
+            Console.Write("                                                                                "); // 12
+            Console.Write("                                                                                "); // 13
             Console.Write("                                                                                "); // 14
             Console.Write("                                                                                "); // 15
             Console.Write("                                                                                "); // 16
@@ -147,7 +150,7 @@ namespace DogOSInstall
             }
         }
 
-        public void PickDiskScreen(List<DriveInfo> drives)
+        public void PickDiskScreen()
         {
             Console.BackgroundColor = ConsoleColor.Gray;
             Console.ForegroundColor = ConsoleColor.White;
@@ -201,24 +204,7 @@ namespace DogOSInstall
 
         public void PickDisk()
         {
-            if (vfs == null)
-            {
-                vfs = new Sys.FileSystem.CosmosVFS();
-                Sys.FileSystem.VFS.VFSManager.RegisterVFS(vfs);
-            }
-
-            var drives = new List<DriveInfo>();
-
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                if (!drive.VolumeLabel.Contains("CDROM"))
-                {
-                    drives.Add(drive);
-                }
-            }
-
-            PickDiskScreen(drives);
-            this.drives = drives;
+            PickDiskScreen();
         }
 
         public void FormatDiskQuestionScreen()
@@ -319,8 +305,10 @@ namespace DogOSInstall
             try
             {
                 File.WriteAllText($"{Convert.ToString(drives[drive_index].Name[0])}:\\setup.ini",
-                    "formatted_disk=1\n" +
-                    $"drive={Convert.ToString(drives[drive_index].Name[0])}");
+                    "[INSTALLER]\n" +
+                    "STAGE=FORMATDISK\n" +
+                    "FORMATTEDDISK=1\n" +
+                    $"DRIVE={Convert.ToString(drives[drive_index].Name[0])}");
             }
             catch (Exception e)
             {
@@ -330,10 +318,99 @@ namespace DogOSInstall
             }
         }
 
+        public SetupStage StringToStage(string str)
+        {
+            SetupStage ret;
+            switch (str)
+            {
+                case "EXIT":
+                    ret = SetupStage.Exit;
+                    break;
+                case "FORMATDISK":
+                    ret = SetupStage.FormatDisk;
+                    break;
+                case "FORMAT":
+                    ret = SetupStage.Format;
+                    break;
+                case "FORMATDISKQUESTION":
+                    ret = SetupStage.FormatDiskQuestion;
+                    break;
+                case "PICKDISK":
+                    ret = SetupStage.PickDisk;
+                    break;
+                case "WELCOME":
+                    ret = SetupStage.Welcome;
+                    break;
+                case "INSTALLDOGOS":
+                    ret = SetupStage.InstallDogOS;
+                    break;
+                default:
+                    ret = SetupStage.Welcome;
+                    break;
+            }
+
+            return ret;
+        }
+
         protected override void BeforeRun()
         {
+            vfs = new Sys.FileSystem.CosmosVFS();
+            Sys.FileSystem.VFS.VFSManager.RegisterVFS(vfs);
+
+            Console.Clear();
             Console.WriteLine("Please wait while we initialize the installer...");
+
             Sys.Graphics.VGAScreen.SetFont(Fonts.AVGA2, 16);
+
+            var drives = new List<DriveInfo>();
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (!drive.VolumeLabel.Contains("CDROM"))
+                {
+                    drives.Add(drive);
+                }
+            }
+            this.drives = drives;
+
+            foreach (var drive in drives)
+            {
+                var dir = Directory.GetFiles($"{drive.Name}");
+
+                if (dir.Contains($"{drive.Name}setup.ini"))
+                {
+                    if (IniFile.Read("setup.ini", "INSTALLER", "FORMATTEDDISK", "0") == "1")
+                    {
+                        int num;
+                        if (int.TryParse(IniFile.Read("setup.ini", "INSTALLER", "DRIVE", "-1"), out num))
+                        {
+                            drive_index = num;
+                        }
+                        else
+                        {
+                            drive_index = -1;
+                        }
+
+                        if (drive_index != -1)
+                        {
+                            vfs.SetFileSystemLabel($"{drive_index}", "DOGOS");
+                        }
+
+                        setup_stage = StringToStage(IniFile.Read("setup.ini", "INSTALLER", "STAGE", "WELCOME"));
+
+                        if (setup_stage != SetupStage.FormatDisk)
+                        {
+                            Console.WriteLine("Something happened on our end.\nPlease re-format the disk using external tools.\n\nRemove any installation media and press any key to restart.");
+                            Console.ReadKey();
+                            Sys.Power.Reboot();
+                        }
+
+                        // File.Delete($"{drive_index}:\\setup.ini");
+                        setup_stage = SetupStage.InstallDogOS;
+                    }
+                    
+                }
+            }
+
             Console.BackgroundColor = ConsoleColor.Gray;
             Console.CursorVisible = false;
             Console.Clear();
@@ -366,6 +443,10 @@ namespace DogOSInstall
                     break;
                 case SetupStage.FormatDisk:
                     FormatDisk();
+                    break;
+                case SetupStage.InstallDogOS:
+                    Console.WriteLine("Install DogOS here :)");
+                    Console.ReadLine();
                     break;
                 default:
                     throw new Exception("Unknown Setup Stage.");
